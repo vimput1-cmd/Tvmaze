@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pencari Serial TV - Tugas API</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 50px; background-color: #e9ecef; color: #343a40; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 8px 20px rgba(0,0,0,0.15); display: inline-block; max-width: 450px; width: 100%; }
+        input { padding: 12px; width: 75%; border: 2px solid #ced4da; border-radius: 8px; margin-bottom: 15px; outline: none; transition: border-color 0.3s; font-size: 14px;}
+        input:focus { border-color: #495057; }
+        button { padding: 12px 20px; background: #343a40; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s; font-size: 14px;}
+        button:hover { background: #212529; }
+        .result { margin-top: 25px; text-align: left; padding: 20px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; }
+        img { width: 100%; max-width: 200px; display: block; margin: 0 auto 15px auto; border-radius: 8px; box-shadow: 0px 4px 8px rgba(0,0,0,0.1); }
+        .badge { display: inline-block; padding: 5px 12px; background: #6c757d; color: white; border-radius: 15px; font-size: 0.85em; margin-right: 5px; margin-bottom: 5px;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>🎬 Info Serial TV</h2>
+        <p>Masukkan judul serial (Contoh: Band of Brothers, The Pacific)</p>
+        <input type="text" id="showInput" placeholder="Ketik judul serial di sini...">
+        <br>
+        <button onclick="searchShow()">Cari Data</button>
+        <div id="resultData"></div>
+    </div>
+
+    <script>
+        function searchShow() {
+            const showName = document.getElementById('showInput').value.trim();
+            const resultDiv = document.getElementById('resultData');
+
+            if(!showName) {
+                resultDiv.innerHTML = '<p style="color:#dc3545; text-align:center; margin-top:20px;">Wah, judulnya jangan sampai kosong ya!</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '<p style="text-align:center; margin-top:20px;">Sedang mencari arsip serial...</p>';
+
+            fetch(`https://api.tvmaze.com/search/shows?q=${showName}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Terjadi kesalahan pada server.');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.length === 0) throw new Error('Serial tidak ditemukan. Coba judul lain!');
+                    
+                    const show = data[0].show;
+                    const imgUrl = show.image ? show.image.medium : '';
+                    const rating = show.rating.average ? show.rating.average : 'Belum ada rating';
+                    const genres = show.genres.map(g => `<span class="badge">${g}</span>`).join('');
+
+                    resultDiv.innerHTML = `
+                        <div class="result">
+                            <h3 style="text-align:center; margin-bottom: 15px;">${show.name}</h3>
+                            ${imgUrl ? `<img src="${imgUrl}" alt="Poster ${show.name}">` : ''}
+                            <p><strong>Genre:</strong> <br>${genres || '<span class="badge">Umum</span>'}</p>
+                            <p><strong>Rating:</strong> ⭐ ${rating}</p>
+                            <p><strong>Status Tayang:</strong> ${show.status}</p>
+                            <p><strong>Jaringan:</strong> ${show.network ? show.network.name : 'Web Channel'}</p>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    resultDiv.innerHTML = `<p style="color:#dc3545; text-align:center; margin-top:20px;">${error.message}</p>`;
+                });
+        }
+    </script>
+</body>
+</html>
