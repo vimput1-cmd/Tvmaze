@@ -3,67 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pencari Serial TV - Tugas API</title>
+    <title>TVMaze Ultimate - Tugas API</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; text-align: center; margin-top: 50px; background-color: #e9ecef; color: #343a40; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 8px 20px rgba(0,0,0,0.15); display: inline-block; max-width: 450px; width: 100%; }
-        input { padding: 12px; width: 75%; border: 2px solid #ced4da; border-radius: 8px; margin-bottom: 15px; outline: none; transition: border-color 0.3s; font-size: 14px;}
-        input:focus { border-color: #495057; }
-        button { padding: 12px 20px; background: #343a40; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background 0.3s; font-size: 14px;}
-        button:hover { background: #212529; }
-        .result { margin-top: 25px; text-align: left; padding: 20px; border-radius: 10px; background-color: #f8f9fa; border: 1px solid #dee2e6; }
-        img { width: 100%; max-width: 200px; display: block; margin: 0 auto 15px auto; border-radius: 8px; box-shadow: 0px 4px 8px rgba(0,0,0,0.1); }
-        .badge { display: inline-block; padding: 5px 12px; background: #6c757d; color: white; border-radius: 15px; font-size: 0.85em; margin-right: 5px; margin-bottom: 5px;}
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f6f8; color: #333; margin: 0; padding: 20px; }
+        .search-bar { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 900px; margin: 0 auto 20px auto; text-align: center; }
+        input { padding: 10px; width: 60%; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; }
+        button { padding: 10px 20px; background: #3cb878; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #2a9d62; }
+        
+        .container { max-width: 900px; margin: 0 auto; background: transparent; }
+        .title { font-size: 36px; font-weight: 300; margin-bottom: 5px; color: #222; }
+        
+        /* Grid Layout Utama */
+        .main-content { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-top: 20px;}
+        .poster-col { flex: 0 0 250px; }
+        .poster-col img { width: 100%; border-radius: 4px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        
+        .summary-col { flex: 1; min-width: 300px; font-size: 15px; line-height: 1.6; color: #444; }
+        .summary-col p { margin-top: 0; }
+        
+        .info-col { flex: 0 0 250px; background: #fff; padding: 15px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); font-size: 14px; }
+        .info-col h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #555; font-weight: 400; font-size: 20px;}
+        .info-col p { margin: 8px 0; }
+        .info-col strong { color: #222; }
+        
+        /* Section Episode Selanjutnya */
+        .next-episode { margin-top: 30px; background: #fff; padding: 15px; border-radius: 4px; border-left: 5px solid #3cb878; box-shadow: 0 2px 5px rgba(0,0,0,0.05);}
+        .next-episode h3 { margin: 0 0 10px 0; font-weight: 400; font-size: 22px; color: #555;}
+        
+        /* Section Cast */
+        .cast-section { margin-top: 30px; }
+        .cast-section h3 { font-weight: 400; font-size: 22px; color: #555; border-bottom: 1px solid #ddd; padding-bottom: 10px;}
+        .cast-grid { display: flex; gap: 15px; overflow-x: auto; padding-bottom: 15px; }
+        .cast-card { background: #fff; width: 120px; flex-shrink: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 12px; text-align: center; border: 1px solid #eee;}
+        .cast-card img { width: 100%; height: 160px; object-fit: cover; }
+        .cast-card .cast-info { padding: 8px; }
+        .cast-card strong { display: block; color: #222; font-size: 13px; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .cast-card span { color: #777; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        
+        ::-webkit-scrollbar { height: 8px; }
+        ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h2>🎬 Info Serial TV</h2>
-        <p>Masukkan judul serial (Contoh: Band of Brothers, The Pacific)</p>
-        <input type="text" id="showInput" placeholder="Ketik judul serial di sini...">
-        <br>
-        <button onclick="searchShow()">Cari Data</button>
-        <div id="resultData"></div>
+
+    <div class="search-bar">
+        <h2>Pencarian Arsip TV</h2>
+        <input type="text" id="showInput" placeholder="Contoh: The Boys, The Last of Us, The Pacific">
+        <button onclick="searchShow()">Cari</button>
+        <div id="loading" style="display:none; margin-top:15px; color:#666;">Sedang menarik data dari TVMaze...</div>
     </div>
+
+    <div class="container" id="resultData">
+        </div>
 
     <script>
         function searchShow() {
             const showName = document.getElementById('showInput').value.trim();
             const resultDiv = document.getElementById('resultData');
+            const loading = document.getElementById('loading');
 
             if(!showName) {
-                resultDiv.innerHTML = '<p style="color:#dc3545; text-align:center; margin-top:20px;">Wah, judulnya jangan sampai kosong ya!</p>';
+                alert("Masukkan judul serial terlebih dahulu!");
                 return;
             }
 
-            resultDiv.innerHTML = '<p style="text-align:center; margin-top:20px;">Sedang mencari arsip serial...</p>';
+            // Tampilkan loading, kosongkan hasil lama
+            loading.style.display = 'block';
+            resultDiv.innerHTML = '';
 
-            fetch(`https://api.tvmaze.com/search/shows?q=${showName}`)
+            // Memanggil API dengan Multiple Embeds: cast dan nextepisode
+            const apiUrl = `https://api.tvmaze.com/singlesearch/shows?q=${showName}&embed[]=cast&embed[]=nextepisode`;
+
+            fetch(apiUrl)
                 .then(response => {
-                    if (!response.ok) throw new Error('Terjadi kesalahan pada server.');
+                    if (!response.ok) throw new Error('Serial tidak ditemukan.');
                     return response.json();
                 })
                 .then(data => {
-                    if (data.length === 0) throw new Error('Serial tidak ditemukan. Coba judul lain!');
-                    
-                    const show = data[0].show;
-                    const imgUrl = show.image ? show.image.medium : '';
-                    const rating = show.rating.average ? show.rating.average : 'Belum ada rating';
-                    const genres = show.genres.map(g => `<span class="badge">${g}</span>`).join('');
+                    loading.style.display = 'none'; // Sembunyikan loading
 
+                    // 1. Olah Data Info Utama
+                    const imgUrl = data.image ? data.image.original : 'https://via.placeholder.com/250x350?text=No+Poster';
+                    const rating = data.rating.average ? data.rating.average : 'N/A';
+                    const network = data.network ? data.network.name : (data.webChannel ? data.webChannel.name : 'Unknown');
+                    const schedule = data.schedule && data.schedule.days.length > 0 ? `${data.schedule.days.join(', ')} (${data.averageRuntime} min)` : 'TBA';
+                    
+                    // 2. Olah Data Episode Selanjutnya (Jika ada)
+                    let nextEpHTML = '';
+                    if (data._embedded && data._embedded.nextepisode) {
+                        const nextEp = data._embedded.nextepisode;
+                        // Format tanggal (contoh: Apr 15, 2026)
+                        const dateObj = new Date(nextEp.airdate);
+                        const dateStr = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        
+                        nextEpHTML = `
+                            <div class="next-episode">
+                                <h3>Next Episode</h3>
+                                <strong style="color: #3cb878; font-size: 18px;">${nextEp.name}</strong><br>
+                                <span style="color: #666;">Season ${nextEp.season}, Episode ${nextEp.number} | Airing: ${dateStr}</span>
+                            </div>
+                        `;
+                    }
+
+                    // 3. Olah Data Pemeran (Cast) beserta Karakter
+                    let castHTML = '';
+                    if (data._embedded && data._embedded.cast && data._embedded.cast.length > 0) {
+                        data._embedded.cast.forEach(c => {
+                            const personImg = c.person.image ? c.person.image.medium : 'https://via.placeholder.com/120x160?text=No+Photo';
+                            castHTML += `
+                                <div class="cast-card">
+                                    <img src="${personImg}" alt="${c.person.name}">
+                                    <div class="cast-info">
+                                        <strong>${c.person.name}</strong>
+                                        <span>sbg ${c.character.name}</span>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    } else {
+                        castHTML = '<p>Data pemeran tidak tersedia.</p>';
+                    }
+
+                    // 4. Render semua data ke HTML
                     resultDiv.innerHTML = `
-                        <div class="result">
-                            <h3 style="text-align:center; margin-bottom: 15px;">${show.name}</h3>
-                            ${imgUrl ? `<img src="${imgUrl}" alt="Poster ${show.name}">` : ''}
-                            <p><strong>Genre:</strong> <br>${genres || '<span class="badge">Umum</span>'}</p>
-                            <p><strong>Rating:</strong> ⭐ ${rating}</p>
-                            <p><strong>Status Tayang:</strong> ${show.status}</p>
-                            <p><strong>Jaringan:</strong> ${show.network ? show.network.name : 'Web Channel'}</p>
+                        <div class="title">${data.name}</div>
+                        
+                        <div class="main-content">
+                            <div class="poster-col">
+                                <img src="${imgUrl}" alt="${data.name} Poster">
+                            </div>
+                            
+                            <div class="summary-col">
+                                ${data.summary || '<p>Tidak ada sinopsis.</p>'}
+                                
+                                ${nextEpHTML}
+                            </div>
+                            
+                            <div class="info-col">
+                                <h3>Show Info</h3>
+                                <p><strong>Network/Web:</strong> <span style="color:#0056b3;">${network}</span></p>
+                                <p><strong>Schedule:</strong> ${schedule}</p>
+                                <p><strong>Status:</strong> ${data.status}</p>
+                                <p><strong>Show Type:</strong> ${data.type}</p>
+                                <p><strong>Genres:</strong> ${data.genres.join(' | ')}</p>
+                                <p><strong>Rating:</strong> ⭐ <strong style="color:#d9534f;">${rating}</strong></p>
+                                <p><strong>Official Site:</strong> <a href="${data.officialSite}" target="_blank" style="color:#0056b3; text-decoration:none;">Visit Site</a></p>
+                            </div>
+                        </div>
+
+                        <div class="cast-section">
+                            <h3>Cast & Characters</h3>
+                            <div class="cast-grid">
+                                ${castHTML}
+                            </div>
                         </div>
                     `;
                 })
                 .catch(error => {
-                    resultDiv.innerHTML = `<p style="color:#dc3545; text-align:center; margin-top:20px;">${error.message}</p>`;
+                    loading.style.display = 'none';
+                    resultDiv.innerHTML = `<p style="color:red; text-align:center;">Error: ${error.message}</p>`;
                 });
         }
     </script>
